@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Politique de confidentialité - Secure Paste</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --nav-bg: #000000;
+            --content-bg: #151515;
+            --input-bg: #1a1a1a;
+            --text-color: #e0e0e0;
+            --text-muted: #888888;
+            --border-color: #2a2a2a;
+            --accent-color: #4a9eff;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .navbar-container {
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+
+        .navbar {
+            background-color: var(--nav-bg);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .navbar-brand {
+            color: var(--text-color);
+            font-size: 18px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .navbar-button {
+            background: var(--text-color);
+            color: var(--nav-bg);
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .navbar-button:hover {
+            opacity: 0.9;
+        }
+
+        .content-container {
+            background: var(--content-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 40px;
+            flex-grow: 1;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            color: var(--text-color);
+        }
+
+        p {
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        ul {
+            margin: 0 0 16px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        footer {
+            background: var(--nav-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 20px 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar-container">
+            <nav class="navbar">
+                <a href="/" class="navbar-brand">Secure Paste</a>
+                <a href="/" class="navbar-button">Nouveau</a>
+            </nav>
+        </div>
+
+        <div class="content-container">
+            <h1>Politique de confidentialité</h1>
+            
+            <h2>Données collectées</h2>
+            <p>
+                Secure Paste collecte un minimum de données, uniquement celles nécessaires au fonctionnement du service :
+            </p>
+            <ul>
+                <li>Le contenu chiffré de vos pastes (inaccessible sans la clé de déchiffrement)</li>
+                <li>Les adresses IP des visiteurs (pour la prévention des abus)</li>
+                <li>Les horodatages des visites</li>
+            </ul>
+
+            <h2>Chiffrement et sécurité</h2>
+            <p>
+                Tous les pastes sont chiffrés côté client avant d'être envoyés à nos serveurs. La clé de 
+                déchiffrement n'est jamais transmise au serveur et reste uniquement dans l'URL partagée.
+                Nous utilisons des algorithmes de chiffrement post-quantiques pour garantir la sécurité 
+                à long terme de vos données.
+            </p>
+
+            <h2>Conservation des données</h2>
+            <p>
+                Les pastes sont automatiquement supprimés dans les cas suivants :
+            </p>
+            <ul>
+                <li>À l'expiration de la durée de vie définie</li>
+                <li>Lorsque le nombre maximum de vues est atteint</li>
+                <li>Sur demande explicite de l'utilisateur</li>
+            </ul>
+
+            <h2>Partage des données</h2>
+            <p>
+                Nous ne partageons aucune donnée avec des tiers. Les seules informations accessibles 
+                sont celles que vous choisissez de partager via les liens de vos pastes.
+            </p>
+
+            <h2>Cookies et traceurs</h2>
+            <p>
+                Secure Paste n'utilise aucun cookie de tracking, de publicité ou d'analyse. 
+                Seuls les cookies techniques essentiels au fonctionnement du service sont utilisés.
+            </p>
+
+            <h2>Vos droits</h2>
+            <p>
+                Conformément au RGPD, vous disposez des droits suivants concernant vos données :
+            </p>
+            <ul>
+                <li>Droit d'accès et de rectification</li>
+                <li>Droit à l'effacement (droit à l'oubli)</li>
+                <li>Droit à la limitation du traitement</li>
+                <li>Droit à la portabilité</li>
+            </ul>
+
+            <h2>Contact</h2>
+            <p>
+                Pour toute question concernant vos données ou pour exercer vos droits,
+                contactez-nous à : contact@securepaste.com
+            </p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <a href="/about" class="footer-link">À propos</a>
+                <a href="/legal" class="footer-link">Mentions légales</a>
+                <a href="/privacy" class="footer-link">Politique de confidentialité</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

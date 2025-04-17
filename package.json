@@ -1,0 +1,28 @@
+{
+  "name": "secure-paste",
+  "version": "1.0.0",
+  "description": "Service de partage sécurisé de secrets avec chiffrement post-quantique et zero-knowledge",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@noble/hashes": "^1.3.3",
+    "bcryptjs": "^2.4.3",
+    "connect-mongo": "^5.1.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.9",
+    "express": "^4.18.3",
+    "express-rate-limit": "^7.1.5",
+    "mongoose": "^8.2.0",
+    "nanoid": "^5.0.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

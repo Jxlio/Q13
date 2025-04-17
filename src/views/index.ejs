@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Paste</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --nav-bg: #000000;
+            --content-bg: #151515;
+            --input-bg: #1a1a1a;
+            --text-color: #e0e0e0;
+            --text-muted: #888888;
+            --border-color: #2a2a2a;
+            --accent-color: #4a9eff;
+            --error-bg: #2d1215;
+            --error-border: #4d1f24;
+            --error-text: #ff4a4a;
+            --success-color: #00c853;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-color);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-button {
+            padding: 8px 16px;
+            background-color: #fff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .navbar-button:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            transform: translateY(-1px);
+        }
+
+        .navbar-button:active {
+            transform: translateY(0);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        .content-container {
+            background-color: var(--content-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 24px;
+            border: none;
+            resize: vertical;
+            font-family: "Menlo", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            box-sizing: border-box;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            transition: background-color 0.2s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            background-color: var(--content-bg);
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .options {
+            padding: 24px 32px;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .option {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 16px;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .option-label {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: var(--text-muted);
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .option-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .option-checkbox label {
+            font-size: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: var(--text-color);
+            transition: all 0.2s ease;
+        }
+
+        input[type="checkbox"] {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin: 0;
+            cursor: pointer;
+            position: relative;
+            background-color: rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        input[type="checkbox"]:checked {
+            background-color: #fff;
+            border-color: #fff;
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: "✓";
+            position: absolute;
+            color: #000;
+            font-size: 14px;
+            left: 3px;
+            top: -1px;
+        }
+
+        input[type="checkbox"]:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .button-container {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+            padding-right: 16px;
+        }
+
+        button {
+            padding: 10px 24px;
+            background-color: #fff;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 160px;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: rgba(255, 255, 255, 0.9);
+            transform: translateY(-1px);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+        }
+
+        #progress {
+            display: none;
+            margin-right: 10px;
+            font-size: 14px;
+            color: var(--text-muted);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 800px) {
+            .options {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            button {
+                width: 100%;
+                margin-top: 8px;
+            }
+        }
+
+        footer {
+            background: var(--nav-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 20px 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="/" class="navbar-brand">Secure Paste</a>
+            <a href="/" class="navbar-button">Nouveau</a>
+        </nav>
+        <div class="content-container">
+            <textarea id="content" placeholder="Collez votre texte ici pour le partager de manière sécurisée..."></textarea>
+            <div class="options">
+                <div class="option">
+                    <div class="option-label">Expire après</div>
+                    <div class="option-group">
+                        <input type="number" id="expiresHours" name="expiresHours" value="1" min="1">
+                        <div class="help-text">Nombre d'heures avant expiration</div>
+                    </div>
+                    <div class="option-checkbox">
+                        <input type="checkbox" id="neverExpires" name="neverExpires">
+                        <label for="neverExpires">N'expire jamais</label>
+                    </div>
+                </div>
+                <div class="option">
+                    <div class="option-label">Limite de vues</div>
+                    <div class="option-group">
+                        <input type="number" id="viewsCount" name="viewsCount" value="3" min="1">
+                        <div class="help-text">Nombre maximum de fois que ce paste peut être lu</div>
+                    </div>
+                    <div class="option-checkbox">
+                        <input type="checkbox" id="unlimitedViews" name="unlimitedViews">
+                        <label for="unlimitedViews">Vues illimitées</label>
+                    </div>
+                </div>
+                <div class="button-container">
+                    <span id="progress"></span>
+                    <button id="submitBtn" type="button">Créer le paste</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <a href="/about" class="footer-link">À propos</a>
+                <a href="/legal" class="footer-link">Mentions légales</a>
+                <a href="/privacy" class="footer-link">Politique de confidentialité</a>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        // Fonction pour générer une clé AES-256 aléatoire
+        async function generateAESKey() {
+            return await crypto.subtle.generateKey(
+                {
+                    name: "AES-GCM",
+                    length: 256
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+        }
+
+        // Fonction pour chiffrer le contenu avec AES-GCM
+        async function encryptContent(content, key) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(content);
+            
+            // Générer un IV aléatoire
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            
+            // Chiffrer le contenu
+            const encryptedContent = await crypto.subtle.encrypt(
+                {
+                    name: "AES-GCM",
+                    iv: iv
+                },
+                key,
+                data
+            );
+
+            // Convertir la clé en format exportable
+            const exportedKey = await crypto.subtle.exportKey("raw", key);
+            
+            return {
+                iv: Array.from(iv),
+                key: Array.from(new Uint8Array(exportedKey)),
+                content: Array.from(new Uint8Array(encryptedContent))
+            };
+        }
+
+        // Fonction pour convertir un tableau en Base64URL
+        function arrayToBase64Url(array) {
+            try {
+                const binary = Array.from(array)
+                    .map(byte => String.fromCharCode(byte))
+                    .join('');
+                
+                return btoa(binary)
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+            } catch (error) {
+                console.error('Erreur d\'encodage Base64:', error);
+                throw new Error('Erreur lors de l\'encodage des données');
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const neverExpires = document.getElementById('neverExpires');
+            const unlimitedViews = document.getElementById('unlimitedViews');
+            const expiresHours = document.getElementById('expiresHours');
+            const viewsCount = document.getElementById('viewsCount');
+            const submitBtn = document.getElementById('submitBtn');
+
+            neverExpires.addEventListener('change', function() {
+                expiresHours.disabled = this.checked;
+                if (this.checked) {
+                    expiresHours.value = "1";
+                }
+            });
+
+            unlimitedViews.addEventListener('change', function() {
+                viewsCount.disabled = this.checked;
+                if (this.checked) {
+                    viewsCount.value = "3";
+                }
+            });
+
+            submitBtn.addEventListener('click', submitForm);
+        });
+
+        async function submitForm() {
+            const submitBtn = document.getElementById('submitBtn');
+            const progress = document.getElementById('progress');
+            
+            submitBtn.disabled = true;
+            progress.style.display = 'inline';
+            progress.textContent = 'Chiffrement en cours...';
+
+            try {
+                const content = document.getElementById('content').value;
+                if (!content) {
+                    throw new Error('Le contenu est requis');
+                }
+
+                const neverExpires = document.getElementById('neverExpires').checked;
+                const unlimitedViews = document.getElementById('unlimitedViews').checked;
+                
+                const expiresIn = !neverExpires ? 
+                    parseInt(document.getElementById('expiresHours').value) * 3600 : 0;
+                const maxViews = !unlimitedViews ? 
+                    parseInt(document.getElementById('viewsCount').value) : 0;
+
+                // Générer et chiffrer
+                const key = await generateAESKey();
+                const encrypted = await encryptContent(content, key);
+
+                progress.textContent = 'Envoi en cours...';
+
+                // Envoyer au serveur
+                const response = await fetch('/paste', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: arrayToBase64Url(encrypted.content),
+                        iv: arrayToBase64Url(encrypted.iv),
+                        expiresIn: expiresIn || null,
+                        maxViews: maxViews || null
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur serveur');
+                }
+
+                // Rediriger vers la page du paste avec la clé dans le fragment
+                const keyFragment = arrayToBase64Url(encrypted.key);
+                window.location.href = `/paste/${data.id}#${keyFragment}`;
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert(error.message);
+                submitBtn.disabled = false;
+                progress.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html> 
