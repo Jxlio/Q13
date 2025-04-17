@@ -528,7 +528,7 @@
     </footer>
 
     <script src="/js/kyber.js"></script>
-    <script>
+    <script nonce="<%= nonce %>">
         let publicKey, secretKey;
         let isEncrypting = false;
 
@@ -619,7 +619,8 @@
                     const response = await fetch('/api/paste', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'CSRF-Token': '<%= csrfToken %>'
                         },
                         body: JSON.stringify(data)
                     });

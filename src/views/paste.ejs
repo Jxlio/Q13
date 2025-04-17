@@ -392,7 +392,7 @@
     </footer>
 
     <script src="/js/kyber.js"></script>
-    <script>
+    <script nonce="<%= nonce %>">
         const pasteId = window.location.pathname.split('/').pop();
         const key = window.location.hash.slice(1);
 
@@ -449,7 +449,11 @@
             try {
                 console.log('Chargement du paste:', { pasteId, key: key ? 'présent' : 'manquant' });
                 
-                const response = await fetch(`/api/paste/${pasteId}${success ? '?success=true' : ''}`);
+                const response = await fetch(`/api/paste/${pasteId}${success ? '?success=true' : ''}`, {
+                    headers: {
+                        'CSRF-Token': '<%= csrfToken %>'
+                    }
+                });
                 if (!response.ok) {
                     throw new Error('Paste non trouvé');
                 }

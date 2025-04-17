@@ -1,28 +1,44 @@
-# Dependencies
-node_modules/
-package-lock.json
-
-# Environment
+# Fichiers de configuration
 .env
 .env.local
 .env.*.local
 
-# Logs
-logs
-*.log
+# Dépendances
+node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Certificats SSL
+certs/
+*.pem
+*.key
+*.crt
+
+# Logs
+logs/
+*.log
+
+# Système d'exploitation
+.DS_Store
+Thumbs.db
+
+# IDE et éditeurs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Fichiers de build
+dist/
+build/
 
 # Runtime data
 pids
 *.pid
 *.seed
 *.pid.lock
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
 
 # OS
 .DS_Store
