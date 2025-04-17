@@ -40,6 +40,10 @@ const pasteSchema = new mongoose.Schema({
     type: Number,
     required: false
   },
+  enableMarkdown: {
+    type: Boolean,
+    default: false
+  },
   visitors: [{
     ip: String,
     timestamp: {

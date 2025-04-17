@@ -2,6 +2,16 @@ import Paste from '../models/Paste.js';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import { nanoid } from 'nanoid';
+import { marked } from 'marked';
+
+// Configuration de marked pour une sécurité renforcée
+marked.setOptions({
+  headerIds: false,
+  mangle: false,
+  breaks: true,
+  gfm: true,
+  sanitize: true
+});
 
 // Fonction pour générer le randomart (algorithme Drunken Bishop)
 function generateRandomArt(content) {
@@ -52,7 +62,7 @@ function generateRandomArt(content) {
 // Créer un nouveau paste
 export const createPaste = async (req, res) => {
   try {
-    const { content, iv, kyberCiphertext, expiresIn, maxViews } = req.body;
+    const { content, iv, kyberCiphertext, expiresIn, maxViews, enableMarkdown } = req.body;
     
     if (!content || !iv || !kyberCiphertext) {
       return res.status(400).json({ error: 'Contenu, IV et kyberCiphertext sont requis' });
@@ -74,7 +84,8 @@ export const createPaste = async (req, res) => {
       randomArt,
       maxViews: maxViews || null,
       remainingViews: maxViews || null,
-      expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null
+      expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
+      enableMarkdown: enableMarkdown || false
     });
     
     await paste.save();
@@ -107,7 +118,8 @@ export const getPaste = async (req, res) => {
       randomArt: paste.randomArt,
       expiresAt: paste.expiresAt,
       remainingViews: paste.remainingViews,
-      visitors: paste.visitors
+      visitors: paste.visitors,
+      enableMarkdown: paste.enableMarkdown
     });
     
   } catch (error) {
