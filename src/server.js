@@ -206,12 +206,15 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(join(__dirname, '../public')));
-app.use('/node_modules', express.static(join(__dirname, '../node_modules'), {
+// Servir uniquement les fichiers publics nécessaires
+app.use(express.static(join(__dirname, '../public'), {
   setHeaders: (res, path) => {
     if (path.endsWith('.js')) {
       res.setHeader('Content-Type', 'application/javascript');
     }
+    // Ajouter des headers de sécurité
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
   }
 }));
 
