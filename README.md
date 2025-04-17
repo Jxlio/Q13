@@ -8,12 +8,7 @@ Un service de partage de texte sécurisé avec chiffrement post-quantique côté
 - 🎨 Visualisation unique RandomArt pour chaque paste
 - ⏱️ Options d'expiration par temps ou nombre de vues
 - 🗑️ Suppression automatique après expiration
-- 📊 Suivi des accès avec horodatage et adresses IP
-- 🖥️ Interface minimaliste en noir et blanc
-- 📝 Support du formatage Markdown
-- 🔐 Protection CSRF intégrée
-- 🛡️ Headers de sécurité renforcés
-- 🔄 Mise à jour en temps réel des statistiques
+
 
 ## Installation
 

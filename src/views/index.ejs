@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Q13</title>
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+    <link rel="icon" type="image/png" href="/images/logo.png">
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -55,6 +54,15 @@
             color: var(--text-color);
             text-decoration: none;
             letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-logo {
+            height: 24px;
+            width: auto;
+            object-fit: contain;
         }
 
         .navbar-button {
@@ -469,7 +477,10 @@
 <body>
     <div class="container">
         <nav class="navbar">
-            <a href="/" class="navbar-brand">Q13</a>
+            <a href="/" class="navbar-brand">
+                <img src="/images/logo.png" alt="Q13 Logo" class="navbar-logo">
+                Q13
+            </a>
             <a href="/" class="navbar-button">Nouveau</a>
         </nav>
         <div class="content-container">
