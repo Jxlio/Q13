@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Paste - Visualisation</title>
+    <title>Q13 - Visualisation</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -227,7 +228,7 @@
 <body>
     <div class="container">
         <nav class="navbar">
-            <a href="/" class="navbar-brand">Secure Paste</a>
+            <a href="/" class="navbar-brand">Q13</a>
             <a href="/" class="navbar-button">Nouveau</a>
         </nav>
 
@@ -254,68 +255,51 @@
         </div>
     </footer>
 
+    <script src="/js/kyber.js"></script>
     <script>
         const pasteId = window.location.pathname.split('/').pop();
-        const key = window.location.hash.slice(1);
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get('key');
 
-        async function decryptContent(encryptedContent, iv, key) {
+        // Fonction pour convertir Base64URL en Uint8Array
+        function base64UrlToUint8Array(base64Url) {
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const binary = atob(base64);
+            return new Uint8Array(binary.split('').map(char => char.charCodeAt(0)));
+        }
+
+        // Fonction pour déchiffrer avec Kyber et AES-GCM
+        async function decryptContent(encryptedContent, iv, kyberCiphertext, sharedSecret) {
             try {
-                console.log('Données reçues:', {
-                    encryptedContent: encryptedContent ? 'présent' : 'manquant',
-                    iv: iv ? 'présent' : 'manquant',
-                    key: key ? 'présent' : 'manquant'
-                });
-
-                if (!encryptedContent || !iv || !key) {
-                    throw new Error('Données manquantes pour le déchiffrement: ' + 
-                        (!encryptedContent ? 'contenu ' : '') +
-                        (!iv ? 'iv ' : '') +
-                        (!key ? 'clé' : '')
-                    );
+                if (!encryptedContent || !iv || !kyberCiphertext || !sharedSecret) {
+                    throw new Error('Données manquantes pour le déchiffrement');
                 }
 
-                const base64UrlToBase64 = (str) => {
-                    if (!str) {
-                        console.error('base64UrlToBase64: chaîne invalide:', str);
-                        throw new Error('Chaîne base64url invalide');
-                    }
-                    return str.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
-                };
+                // Convertir les données en Uint8Array
+                const encryptedBuffer = base64UrlToUint8Array(encryptedContent);
+                const ivBuffer = base64UrlToUint8Array(iv);
+                const kyberCiphertextBuffer = base64UrlToUint8Array(kyberCiphertext);
+                const sharedSecretBuffer = base64UrlToUint8Array(sharedSecret);
 
-                const addBase64Padding = (str) => {
-                    if (!str) {
-                        console.error('addBase64Padding: chaîne invalide:', str);
-                        throw new Error('Chaîne base64 invalide');
-                    }
-                    const pad = str.length % 4;
-                    if (pad) {
-                        return str + '='.repeat(4 - pad);
-                    }
-                    return str;
-                };
+                // Déchiffrer la clé AES avec Kyber
+                const aesKeyBuffer = await kyber.Decrypt768(kyberCiphertextBuffer, sharedSecretBuffer);
 
-                const standardKey = addBase64Padding(base64UrlToBase64(key));
-                const standardIv = addBase64Padding(base64UrlToBase64(iv));
-                const standardContent = addBase64Padding(base64UrlToBase64(encryptedContent));
-
-                const keyBuffer = new Uint8Array(atob(standardKey).split('').map(c => c.charCodeAt(0)));
-                const ivBuffer = new Uint8Array(atob(standardIv).split('').map(c => c.charCodeAt(0)));
-                const encryptedBuffer = new Uint8Array(atob(standardContent).split('').map(c => c.charCodeAt(0)));
-
-                const importedKey = await window.crypto.subtle.importKey(
+                // Importer la clé AES
+                const aesKey = await crypto.subtle.importKey(
                     "raw",
-                    keyBuffer,
+                    aesKeyBuffer,
                     { name: "AES-GCM" },
                     false,
                     ["decrypt"]
                 );
 
-                const decryptedBuffer = await window.crypto.subtle.decrypt(
+                // Déchiffrer le contenu avec AES-GCM
+                const decryptedBuffer = await crypto.subtle.decrypt(
                     {
                         name: "AES-GCM",
                         iv: ivBuffer
                     },
-                    importedKey,
+                    aesKey,
                     encryptedBuffer
                 );
 
@@ -339,16 +323,22 @@
                 console.log('Données du serveur reçues:', {
                     hasContent: !!data.content,
                     hasIv: !!data.iv,
+                    hasKyberCiphertext: !!data.kyberCiphertext,
                     randomArt: !!data.randomArt,
                     visitors: data.visitors?.length
                 });
                 
                 if (!key) {
-                    throw new Error('Clé de déchiffrement manquante');
+                    throw new Error('Ce paste nécessite une clé de déchiffrement. Veuillez utiliser le lien complet qui vous a été fourni.');
                 }
 
                 try {
-                    const decryptedContent = await decryptContent(data.content, data.iv, key);
+                    const decryptedContent = await decryptContent(
+                        data.content,
+                        data.iv,
+                        data.kyberCiphertext,
+                        key
+                    );
                     document.getElementById('content').textContent = decryptedContent;
                     
                     if (!success) {
@@ -383,10 +373,6 @@
                 ).join('');
                 document.getElementById('visitors').innerHTML = visitorsHtml || 'Aucun visiteur';
 
-                // Afficher le contenu
-                document.getElementById('content-wrapper').classList.remove('hidden');
-                document.getElementById('error').classList.add('hidden');
-
             } catch (error) {
                 showError(error.message);
             }
@@ -394,11 +380,8 @@
 
         function showError(message) {
             const errorElement = document.getElementById('error');
-            const contentWrapper = document.getElementById('content-wrapper');
-            
             errorElement.textContent = message;
-            errorElement.classList.remove('hidden');
-            contentWrapper.classList.add('hidden');
+            errorElement.style.display = 'block';
         }
 
         loadPaste();

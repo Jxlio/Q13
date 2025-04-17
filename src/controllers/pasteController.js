@@ -1,6 +1,7 @@
 import Paste from '../models/Paste.js';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
+import { nanoid } from 'nanoid';
 
 // Fonction pour générer le randomart (algorithme Drunken Bishop)
 function generateRandomArt(content) {
@@ -51,23 +52,33 @@ function generateRandomArt(content) {
 // Créer un nouveau paste
 export const createPaste = async (req, res) => {
   try {
-    const { content, iv, expiresIn, maxViews } = req.body;
+    const { content, iv, kyberCiphertext, expiresIn, maxViews } = req.body;
     
-    if (!content || !iv) {
-      return res.status(400).json({ error: 'Le contenu et l\'IV sont requis' });
+    if (!content || !iv || !kyberCiphertext) {
+      return res.status(400).json({ error: 'Contenu, IV et kyberCiphertext sont requis' });
     }
     
+    // Générer un ID unique
+    const id = nanoid(32);
+    
+    // Générer le RandomArt
+    const hash = sha256(content);
+    const randomArt = generateRandomArt(hash);
+    
+    // Créer le paste
     const paste = new Paste({
+      id,
       content,
       iv,
-      randomArt: generateRandomArt(content),
-      remainingViews: maxViews,
+      kyberCiphertext,
+      randomArt,
       maxViews: maxViews || null,
+      remainingViews: maxViews || null,
       expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null
     });
     
     await paste.save();
-    res.json({ id: paste.id });
+    res.json({ id });
     
   } catch (error) {
     console.error('Erreur lors de la création du paste:', error);
@@ -84,7 +95,7 @@ export const getPaste = async (req, res) => {
       return res.status(404).json({ error: 'Paste non trouvé' });
     }
     
-    // Ajouter le visiteur et décrémenter le compteur seulement si success=true
+    // Si success=true dans la requête, décrémenter le compteur de vues
     if (req.query.success === 'true') {
       await paste.addVisitor(req.ip);
     }
@@ -92,10 +103,11 @@ export const getPaste = async (req, res) => {
     res.json({
       content: paste.content,
       iv: paste.iv,
+      kyberCiphertext: paste.kyberCiphertext,
       randomArt: paste.randomArt,
-      visitors: paste.visitors,
+      expiresAt: paste.expiresAt,
       remainingViews: paste.remainingViews,
-      expiresAt: paste.expiresAt
+      visitors: paste.visitors
     });
     
   } catch (error) {

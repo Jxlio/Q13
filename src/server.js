@@ -26,7 +26,23 @@ const limiter = rateLimit({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(limiter);
-app.use(express.static(join(__dirname, 'public')));
+
+// Configuration des types MIME
+app.use((req, res, next) => {
+  if (req.path.endsWith('.js')) {
+    res.type('application/javascript');
+  }
+  next();
+});
+
+app.use(express.static(join(__dirname, '../public')));
+app.use('/node_modules', express.static(join(__dirname, '../node_modules'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
 
 // Configuration du moteur de template
 app.set('view engine', 'ejs');
@@ -38,6 +54,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/paste', pasteController.createPaste);
+app.post('/api/paste', pasteController.createPaste);
 app.get('/paste/:id', (req, res) => {
   res.render('paste');
 });

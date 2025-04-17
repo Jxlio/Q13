@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Paste</title>
+    <title>Q13</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -301,7 +302,7 @@
 <body>
     <div class="container">
         <nav class="navbar">
-            <a href="/" class="navbar-brand">Secure Paste</a>
+            <a href="/" class="navbar-brand">Q13</a>
             <a href="/" class="navbar-button">Nouveau</a>
         </nav>
         <div class="content-container">
@@ -347,147 +348,97 @@
         </div>
     </footer>
 
-    <script type="module">
-        // Fonction pour générer une clé AES-256 aléatoire
-        async function generateAESKey() {
-            return await crypto.subtle.generateKey(
-                {
-                    name: "AES-GCM",
-                    length: 256
-                },
-                true,
-                ["encrypt", "decrypt"]
-            );
-        }
+    <script src="/js/kyber.js"></script>
+    <script>
+        let publicKey, secretKey;
+        let isEncrypting = false;
 
-        // Fonction pour chiffrer le contenu avec AES-GCM
-        async function encryptContent(content, key) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(content);
-            
-            // Générer un IV aléatoire
-            const iv = crypto.getRandomValues(new Uint8Array(12));
-            
-            // Chiffrer le contenu
-            const encryptedContent = await crypto.subtle.encrypt(
-                {
-                    name: "AES-GCM",
-                    iv: iv
-                },
-                key,
-                data
-            );
-
-            // Convertir la clé en format exportable
-            const exportedKey = await crypto.subtle.exportKey("raw", key);
-            
-            return {
-                iv: Array.from(iv),
-                key: Array.from(new Uint8Array(exportedKey)),
-                content: Array.from(new Uint8Array(encryptedContent))
-            };
-        }
-
-        // Fonction pour convertir un tableau en Base64URL
-        function arrayToBase64Url(array) {
+        async function generateKeys() {
             try {
-                const binary = Array.from(array)
-                    .map(byte => String.fromCharCode(byte))
-                    .join('');
-                
-                return btoa(binary)
-                    .replace(/\+/g, '-')
-                    .replace(/\//g, '_')
-                    .replace(/=+$/, '');
+                const keys = await window.KeyGen768();
+                [publicKey, secretKey] = keys;
+                return true;
             } catch (error) {
-                console.error('Erreur d\'encodage Base64:', error);
-                throw new Error('Erreur lors de l\'encodage des données');
+                console.error('Erreur lors de la génération des clés:', error);
+                return false;
             }
         }
 
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            const neverExpires = document.getElementById('neverExpires');
-            const unlimitedViews = document.getElementById('unlimitedViews');
-            const expiresHours = document.getElementById('expiresHours');
-            const viewsCount = document.getElementById('viewsCount');
-            const submitBtn = document.getElementById('submitBtn');
+        async function encryptContent(content) {
+            if (!publicKey) {
+                const success = await generateKeys();
+                if (!success) return null;
+            }
 
-            neverExpires.addEventListener('change', function() {
-                expiresHours.disabled = this.checked;
-                if (this.checked) {
-                    expiresHours.value = "1";
+            try {
+                const encrypted = await window.Encrypt768(content, publicKey);
+                return {
+                    ciphertext: encrypted.ciphertext,
+                    iv: encrypted.iv,
+                    kyberCiphertext: encrypted.kyberCiphertext,
+                    secretKey: secretKey
+                };
+            } catch (error) {
+                console.error('Erreur lors du chiffrement:', error);
+                return null;
+            }
+        }
+
+        document.getElementById('submitBtn').addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (isEncrypting) return;
+
+            const content = document.getElementById('content').value;
+            if (!content.trim()) {
+                alert('Veuillez entrer du contenu');
+                return;
+            }
+
+            isEncrypting = true;
+            const button = this;
+            button.disabled = true;
+            button.textContent = 'Chiffrement en cours...';
+
+            const result = await encryptContent(content);
+            if (result) {
+                const data = {
+                    content: result.ciphertext,
+                    iv: result.iv,
+                    kyberCiphertext: result.kyberCiphertext
+                };
+                
+                if (!document.getElementById('neverExpires').checked) {
+                    const hours = document.getElementById('expiresHours').value;
+                    data.expiresIn = hours * 3600; // Convertir en secondes
                 }
-            });
-
-            unlimitedViews.addEventListener('change', function() {
-                viewsCount.disabled = this.checked;
-                if (this.checked) {
-                    viewsCount.value = "3";
+                
+                if (!document.getElementById('unlimitedViews').checked) {
+                    const views = document.getElementById('viewsCount').value;
+                    data.maxViews = views;
                 }
-            });
 
-            submitBtn.addEventListener('click', submitForm);
+                try {
+                    const response = await fetch('/api/paste', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    const responseData = await response.json();
+                    if (responseData.id) {
+                        const secretKeyBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(result.secretKey)));
+                        window.location.href = `/paste/${responseData.id}?key=${encodeURIComponent(secretKeyBase64)}`;
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de l\'envoi:', error);
+                }
+            }
+
+            isEncrypting = false;
+            button.disabled = false;
+            button.textContent = 'Créer le paste';
         });
-
-        async function submitForm() {
-            const submitBtn = document.getElementById('submitBtn');
-            const progress = document.getElementById('progress');
-            
-            submitBtn.disabled = true;
-            progress.style.display = 'inline';
-            progress.textContent = 'Chiffrement en cours...';
-
-            try {
-                const content = document.getElementById('content').value;
-                if (!content) {
-                    throw new Error('Le contenu est requis');
-                }
-
-                const neverExpires = document.getElementById('neverExpires').checked;
-                const unlimitedViews = document.getElementById('unlimitedViews').checked;
-                
-                const expiresIn = !neverExpires ? 
-                    parseInt(document.getElementById('expiresHours').value) * 3600 : 0;
-                const maxViews = !unlimitedViews ? 
-                    parseInt(document.getElementById('viewsCount').value) : 0;
-
-                // Générer et chiffrer
-                const key = await generateAESKey();
-                const encrypted = await encryptContent(content, key);
-
-                progress.textContent = 'Envoi en cours...';
-
-                // Envoyer au serveur
-                const response = await fetch('/paste', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        content: arrayToBase64Url(encrypted.content),
-                        iv: arrayToBase64Url(encrypted.iv),
-                        expiresIn: expiresIn || null,
-                        maxViews: maxViews || null
-                    })
-                });
-
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.error || 'Erreur serveur');
-                }
-
-                // Rediriger vers la page du paste avec la clé dans le fragment
-                const keyFragment = arrayToBase64Url(encrypted.key);
-                window.location.href = `/paste/${data.id}#${keyFragment}`;
-
-            } catch (error) {
-                console.error('Erreur:', error);
-                alert(error.message);
-                submitBtn.disabled = false;
-                progress.style.display = 'none';
-            }
-        }
     </script>
 </body>
 </html> 

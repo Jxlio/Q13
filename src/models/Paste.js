@@ -15,6 +15,10 @@ const pasteSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  kyberCiphertext: {
+    type: String,
+    required: true
+  },
   iv: {
     type: String,
     required: true
@@ -38,7 +42,10 @@ const pasteSchema = new mongoose.Schema({
   },
   visitors: [{
     ip: String,
-    timestamp: Date
+    timestamp: {
+      type: Date,
+      default: Date.now
+    }
   }],
   createdAt: {
     type: Date,
