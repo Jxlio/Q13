@@ -195,6 +195,8 @@ const sanitizeContent = (req, res, next) => {
 // Routes API avec protection
 app.post('/api/paste', validatePaste, sanitizeContent, pasteController.createPaste);
 app.get('/api/paste/:id', pasteController.getPaste);
+app.get('/api/paste/:id/status', pasteController.getPasteStatus);
+app.get('/api/paste/:id/sse', pasteController.getPasteSSE);
 
 // Configuration des types MIME
 app.use((req, res, next) => {

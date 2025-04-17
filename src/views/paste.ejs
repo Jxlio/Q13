@@ -501,31 +501,58 @@
 
                 document.getElementById('randomArt').textContent = data.randomArt;
                 
-                const infoItems = [];
-                if (data.remainingViews !== undefined) {
-                    infoItems.push(`Vues restantes <span class="badge">${data.remainingViews}</span>`);
-                }
-                if (data.expiresAt) {
-                    const expireDate = new Date(data.expiresAt);
-                    const timeLeft = expireDate - new Date();
-                    const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
-                    
-                    if (hoursLeft < 24) {
-                        infoItems.push(`Expire dans <span class="badge">${hoursLeft}h</span>`);
-                    } else {
-                        infoItems.push(`Expire le <span class="badge">${expireDate.toLocaleDateString()}</span>`);
-                    }
-                }
-                document.getElementById('info').innerHTML = infoItems.join('<br>');
-
-                const visitorsHtml = data.visitors.map(v => 
-                    `<div class="visitor-item">${v.ip} - ${new Date(v.timestamp).toLocaleString()}</div>`
-                ).join('');
-                document.getElementById('visitors').innerHTML = visitorsHtml || 'Aucun visiteur';
+                updateInfo(data);
+                updateVisitors(data.visitors);
 
             } catch (error) {
                 showError(error.message);
             }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch(`/api/paste/${pasteId}/status`, {
+                    headers: {
+                        'CSRF-Token': '<%= csrfToken %>'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la mise à jour du statut');
+                }
+
+                const data = await response.json();
+                updateInfo(data);
+                updateVisitors(data.visitors);
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour du statut:', error);
+            }
+        }
+
+        function updateInfo(data) {
+            const infoItems = [];
+            if (data.remainingViews !== undefined) {
+                infoItems.push(`Vues restantes <span class="badge">${data.remainingViews}</span>`);
+            }
+            if (data.expiresAt) {
+                const expireDate = new Date(data.expiresAt);
+                const timeLeft = expireDate - new Date();
+                const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
+                
+                if (hoursLeft < 24) {
+                    infoItems.push(`Expire dans <span class="badge">${hoursLeft}h</span>`);
+                } else {
+                    infoItems.push(`Expire le <span class="badge">${expireDate.toLocaleDateString()}</span>`);
+                }
+            }
+            document.getElementById('info').innerHTML = infoItems.join('<br>');
+        }
+
+        function updateVisitors(visitors) {
+            const visitorsHtml = visitors.map(v => 
+                `<div class="visitor-item">${v.ip} - ${new Date(v.timestamp).toLocaleString()}</div>`
+            ).join('');
+            document.getElementById('visitors').innerHTML = visitorsHtml || 'Aucun visiteur';
         }
 
         function showError(message) {
@@ -534,7 +561,27 @@
             errorElement.style.display = 'block';
         }
 
+        // Chargement initial
         loadPaste();
+
+        // Configuration des SSE pour les mises à jour en temps réel
+        const eventSource = new EventSource(`/api/paste/${pasteId}/sse`);
+        
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            updateInfo(data);
+            updateVisitors(data.visitors);
+        };
+
+        eventSource.onerror = (error) => {
+            console.error('Erreur SSE:', error);
+            eventSource.close();
+        };
+
+        // Nettoyage lors de la fermeture de la page
+        window.addEventListener('beforeunload', () => {
+            eventSource.close();
+        });
     </script>
 </body>
 </html> 

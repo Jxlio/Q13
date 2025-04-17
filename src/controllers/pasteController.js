@@ -126,4 +126,73 @@ export const getPaste = async (req, res) => {
     console.error('Erreur lors de la récupération du paste:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
+};
+
+// Récupérer les informations de statut d'un paste sans compter les visites
+export const getPasteStatus = async (req, res) => {
+  try {
+    const paste = await Paste.findOne({ id: req.params.id });
+    
+    if (!paste) {
+      return res.status(404).json({ error: 'Paste non trouvé' });
+    }
+    
+    res.json({
+      expiresAt: paste.expiresAt,
+      remainingViews: paste.remainingViews,
+      visitors: paste.visitors,
+      enableMarkdown: paste.enableMarkdown
+    });
+    
+  } catch (error) {
+    console.error('Erreur lors de la récupération du statut du paste:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
+// Gérer les événements SSE pour les mises à jour en temps réel
+export const getPasteSSE = async (req, res) => {
+  try {
+    const paste = await Paste.findOne({ id: req.params.id });
+    
+    if (!paste) {
+      return res.status(404).json({ error: 'Paste non trouvé' });
+    }
+
+    // Configuration des headers SSE
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+
+    // Fonction pour envoyer les mises à jour
+    const sendUpdate = async () => {
+      const updatedPaste = await Paste.findOne({ id: req.params.id });
+      if (updatedPaste) {
+        const data = {
+          expiresAt: updatedPaste.expiresAt,
+          remainingViews: updatedPaste.remainingViews,
+          visitors: updatedPaste.visitors,
+          enableMarkdown: updatedPaste.enableMarkdown
+        };
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      }
+    };
+
+    // Envoyer une mise à jour initiale
+    await sendUpdate();
+
+    // Configurer un intervalle pour les mises à jour
+    const interval = setInterval(sendUpdate, 5000);
+
+    // Nettoyer lors de la déconnexion
+    req.on('close', () => {
+      clearInterval(interval);
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la configuration SSE:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 }; 
