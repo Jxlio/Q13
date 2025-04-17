@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Q13 - Visualisation</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
+            --bg-color: #1a1a1a;
             --bg-color: #0a0a0a;
             --nav-bg: #000000;
             --content-bg: #151515;
@@ -18,6 +20,7 @@
             --error-bg: #2d1215;
             --error-border: #4d1f24;
             --error-text: #ff4a4a;
+            --success-color: #00c853;
         }
 
         body {
@@ -223,6 +226,139 @@
         .footer-link:hover {
             color: var(--text-color);
         }
+
+        /* Styles pour le contenu Markdown */
+        .content[data-markdown="true"] {
+            white-space: normal;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .content[data-markdown="true"] h1,
+        .content[data-markdown="true"] h2,
+        .content[data-markdown="true"] h3,
+        .content[data-markdown="true"] h4,
+        .content[data-markdown="true"] h5,
+        .content[data-markdown="true"] h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: var(--text-color);
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .content[data-markdown="true"] h1 { font-size: 2em; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+        .content[data-markdown="true"] h2 { font-size: 1.75em; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+        .content[data-markdown="true"] h3 { font-size: 1.5em; }
+        .content[data-markdown="true"] h4 { font-size: 1.25em; }
+        .content[data-markdown="true"] h5 { font-size: 1.1em; }
+        .content[data-markdown="true"] h6 { font-size: 1em; }
+
+        .content[data-markdown="true"] p {
+            margin: 1em 0;
+            line-height: 1.6;
+        }
+
+        .content[data-markdown="true"] a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .content[data-markdown="true"] a:hover {
+            text-decoration: underline;
+            color: var(--primary-color);
+        }
+
+        .content[data-markdown="true"] code {
+            background: var(--inline-code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.9em;
+        }
+
+        .content[data-markdown="true"] pre {
+            background: var(--code-bg);
+            padding: 1em;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1em 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content[data-markdown="true"] pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            font-size: 0.9em;
+            color: #e6e6e6;
+        }
+
+        .content[data-markdown="true"] blockquote {
+            margin: 1em 0;
+            padding: 0.5em 1em;
+            color: var(--text-muted);
+            border-left: 4px solid var(--accent-color);
+            background: var(--input-bg);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .content[data-markdown="true"] ul,
+        .content[data-markdown="true"] ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+
+        .content[data-markdown="true"] li {
+            margin: 0.5em 0;
+        }
+
+        .content[data-markdown="true"] table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+            display: block;
+            overflow-x: auto;
+        }
+
+        .content[data-markdown="true"] th,
+        .content[data-markdown="true"] td {
+            border: 1px solid var(--border-color);
+            padding: 0.6em 1em;
+        }
+
+        .content[data-markdown="true"] th {
+            background: var(--input-bg);
+            font-weight: 600;
+        }
+
+        .content[data-markdown="true"] tr:nth-child(2n) {
+            background: var(--input-bg);
+        }
+
+        .content[data-markdown="true"] img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin: 1em 0;
+        }
+
+        .content[data-markdown="true"] hr {
+            height: 1px;
+            border: none;
+            background: var(--border-color);
+            margin: 2em 0;
+        }
+
+        .content[data-markdown="true"] strong {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .content[data-markdown="true"] em {
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -258,8 +394,7 @@
     <script src="/js/kyber.js"></script>
     <script>
         const pasteId = window.location.pathname.split('/').pop();
-        const urlParams = new URLSearchParams(window.location.search);
-        const key = urlParams.get('key');
+        const key = window.location.hash.slice(1);
 
         // Fonction pour convertir Base64URL en Uint8Array
         function base64UrlToUint8Array(base64Url) {
@@ -318,14 +453,15 @@
                 if (!response.ok) {
                     throw new Error('Paste non trouvé');
                 }
-                
+
                 const data = await response.json();
                 console.log('Données du serveur reçues:', {
                     hasContent: !!data.content,
                     hasIv: !!data.iv,
                     hasKyberCiphertext: !!data.kyberCiphertext,
                     randomArt: !!data.randomArt,
-                    visitors: data.visitors?.length
+                    visitors: data.visitors?.length,
+                    enableMarkdown: data.enableMarkdown
                 });
                 
                 if (!key) {
@@ -339,8 +475,18 @@
                         data.kyberCiphertext,
                         key
                     );
-                    document.getElementById('content').textContent = decryptedContent;
                     
+                    const contentElement = document.getElementById('content');
+                    
+                    // Traiter le contenu en fonction du type (Markdown ou texte brut)
+                    if (data.enableMarkdown) {
+                        contentElement.setAttribute('data-markdown', 'true');
+                        contentElement.innerHTML = marked.parse(decryptedContent);
+                    } else {
+                        contentElement.removeAttribute('data-markdown');
+                        contentElement.textContent = decryptedContent;
+                    }
+
                     if (!success) {
                         await loadPaste(true);
                     }
