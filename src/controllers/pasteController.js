@@ -3,6 +3,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import { nanoid } from 'nanoid';
 import { marked } from 'marked';
+import { body, validationResult } from 'express-validator';
 
 // Configuration de marked pour une sécurité renforcée
 marked.setOptions({
@@ -12,6 +13,29 @@ marked.setOptions({
   gfm: true,
   sanitize: true
 });
+
+// Validation middleware
+export const createPasteValidation = [
+  body('content')
+    .trim()
+    .isLength({ max: 2 * 1024 * 1024 }).withMessage('Le contenu ne doit pas dépasser 2 Mo')
+    .escape(),
+  body('expiresIn')
+    .optional()
+    .isInt({ min: 300, max: 7776000 }).withMessage('La durée d\'expiration doit être entre 5 minutes et 90 jours'),
+  body('maxViews')
+    .optional()
+    .isInt({ min: 1, max: 100 }).withMessage('Le nombre de vues doit être entre 1 et 100'),
+  body('enableMarkdown')
+    .optional()
+    .isBoolean().withMessage('enableMarkdown doit être un booléen'),
+  body('iv')
+    .notEmpty().withMessage('IV est requis')
+    .isBase64().withMessage('IV doit être en Base64'),
+  body('kyberCiphertext')
+    .notEmpty().withMessage('kyberCiphertext est requis')
+    .isBase64().withMessage('kyberCiphertext doit être en Base64')
+];
 
 // Fonction pour générer le randomart (algorithme Drunken Bishop)
 function generateRandomArt(content) {
@@ -62,11 +86,16 @@ function generateRandomArt(content) {
 // Créer un nouveau paste
 export const createPaste = async (req, res) => {
   try {
-    const { content, iv, kyberCiphertext, expiresIn, maxViews, enableMarkdown } = req.body;
-    
-    if (!content || !iv || !kyberCiphertext) {
-      return res.status(400).json({ error: 'Contenu, IV et kyberCiphertext sont requis' });
+    // Vérifier les erreurs de validation
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Données invalides', 
+        details: errors.array() 
+      });
     }
+
+    const { content, iv, kyberCiphertext, expiresIn, maxViews, enableMarkdown } = req.body;
     
     // Générer un ID unique
     const id = nanoid(32);
@@ -85,7 +114,11 @@ export const createPaste = async (req, res) => {
       maxViews: maxViews || null,
       remainingViews: maxViews || null,
       expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
-      enableMarkdown: enableMarkdown || false
+      enableMarkdown: enableMarkdown || false,
+      visitors: [{
+        ip: req.ip,
+        timestamp: new Date()
+      }]
     });
     
     await paste.save();

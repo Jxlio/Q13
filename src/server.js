@@ -65,6 +65,10 @@ app.use(helmet({
       mediaSrc: ["'none'"],
       frameSrc: ["'none'"],
       formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'none'"],
+      manifestSrc: ["'self'"],
+      workerSrc: ["'none'"],
       sandbox: ['allow-forms', 'allow-scripts', 'allow-same-origin'],
       upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
     },
@@ -87,13 +91,18 @@ app.use(helmet({
   }
 }));
 
-// Protection supplémentaire contre les XSS
+// Protection supplémentaire contre les XSS et autres attaques
 app.use((req, res, next) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Download-Options', 'noopen');
   res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
   res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Permissions-Policy', 
+    'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+  );
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   next();
 });
 
@@ -131,15 +140,24 @@ app.use(cors({
   credentials: true
 }));
 
-// Configuration de la session
+// Configuration de la session avec sécurité renforcée
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
+  store: MongoStore.create({ 
+    mongoUrl: process.env.MONGODB_URI,
+    crypto: {
+      secret: process.env.SESSION_ENCRYPT_SECRET
+    }
+  }),
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
+    sameSite: 'strict',
+    domain: process.env.COOKIE_DOMAIN,
+    path: '/',
+    signed: true,
     maxAge: 1000 * 60 * 60 * 24 // 24 heures
   }
 }));

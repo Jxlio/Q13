@@ -471,6 +471,22 @@
         .error-message.visible {
             display: block;
         }
+
+        /* Styles pour le générateur de secrets */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .content-container {
+            background-color: var(--content-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+        }
     </style>
 </head>
 
@@ -484,8 +500,7 @@
             <a href="/" class="navbar-button">Nouveau</a>
         </nav>
         <div class="content-container">
-            <textarea id="content"
-                placeholder="Collez votre texte ici pour le partager de manière sécurisée..."></textarea>
+            <textarea id="content" placeholder="Collez votre texte ici pour le partager de manière sécurisée..."></textarea>
             <div class="options">
                 <div class="option">
                     <div class="option-label">Expire après</div>
@@ -539,7 +554,9 @@
     </footer>
 
     <script src="/js/kyber.js"></script>
+    <script src="/js/meteor-effect.js"></script>
     <script nonce="<%= nonce %>">
+        // Code existant pour le paste
         let publicKey, secretKey;
         let isEncrypting = false;
 
